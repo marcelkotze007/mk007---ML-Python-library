@@ -1,2 +1,2 @@
-# mk007---ML-Python-library
-Check in of all the ML coding I have done 
+# ML basics 
+This is a basic overview and examples of supervised and unsupervised machine learning coded in python. 
