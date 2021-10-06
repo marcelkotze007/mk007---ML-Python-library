@@ -1,0 +1,14 @@
+Connecting to a local machine using Colab Notebooks
+
+link with instructions: https://research.google.com/colaboratory/local-runtimes.html
+
+1. Install Jupyter
+	pip install jupyterlab
+
+2. Install jypyter_http_over_ws
+	pip install jupyter_http_over_ws
+	jupyter serverextension enable --py jupyter_http_over_ws
+
+3. Start server and authenticate
+	jupyter notebook --NotebookApp.allow_origin='https://colab.research.google.com' --port=8889 --NotebookApp.port_retries=0
+ 
