@@ -72,7 +72,7 @@ class Multiple_Linear(object):
         print("The value of R squared is", R)
         return R
         
-""
+
 filename = "C:/Users/Marcel/OneDrive/Python Courses/Deep Learning/Linear Regression/Data/data_2d.csv"
 
 MultiL = Multiple_Linear()
@@ -81,4 +81,3 @@ X, Y = MultiL.get_data(filename)
 MultiL.plot_graph(X, Y)
 Yhat = MultiL.calc_weights(X, Y)
 MultiL.R_squared(Y, Yhat)
-""

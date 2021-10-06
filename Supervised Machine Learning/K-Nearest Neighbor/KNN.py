@@ -1,8 +1,8 @@
 import numpy as np
-from sortedcontainers import SortedList
-from future.utils import viewitems
+#from sortedcontainers import SortedList
 import matplotlib.pyplot as plt
 
+from future.utils import viewitems
 from datetime import datetime as dt
 from Utilities_KNN import KNN_Util
 

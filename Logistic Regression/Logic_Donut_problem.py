@@ -23,8 +23,7 @@ class donut:
         Y = np.array([0] * (N//2) + [1] * (N//2))
 
         #Plot the data to showcase the problem
-        #plt.scatter(X[:,0], X[:,1], c = Y)
-        #plt.autoscale(enable=False)
+        #plt.scatter(X[:,0], X[:,1], c = Y, s = 100, alpha = 0.5)
         #plt.show()
 
         #Add the bias term:
@@ -56,7 +55,7 @@ class donut:
         l2 = 0.1
         
         error = []
-        for i in range(5000):
+        for i in range(10000):
             z = X_bias.dot(w)
             Y_hat = DP.sigmoid(z)
             cost = DP.cross_entropy_error(Y, Y_hat)
@@ -75,7 +74,7 @@ class donut:
         print("Final w: ", w)
         print("Final classification rates: ", 1 - np.abs(Y - np.round(Y_hat)).sum()/N)
 
+if __name__ == "__main__":
 
-DP = donut()
-
-DP.gradient_decent()
+    DP = donut()
+    DP.gradient_decent()
