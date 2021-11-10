@@ -10,6 +10,6 @@ with open("mymodel.pkl", 'wb') as f:
     pickle.dump(model, f)
 
 # Later
-with open ("mymodel.pkl") as f:
+with open ("mymodel.pkl", "rb") as f:
     model = pickle.load(f) #already trained
 

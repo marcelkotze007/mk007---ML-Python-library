@@ -4,7 +4,7 @@ from mpl_toolkits.mplot3d import Axes3D #Used to sketch 3D graphs
 import matplotlib.pyplot as plt
 
 class Multiple_Linear(object):
-    def get_data(self, filename, test_size):
+    def get_data(self, filename, test_siz_perc=0.6):
         """
         Loads the data.
         Takes the filename as an argument.
@@ -19,6 +19,7 @@ class Multiple_Linear(object):
         N = N[0]                        #Gets the number of rows
         D = dataset.shape[1] - 1
         #print(N)
+        test_size = int(N * test_siz_perc)
         #X1 = dataset[:, 0]
         X2 = dataset[:, :-2] #The code to add more than one column and leave out the last column (usualy the Y values)
         X = np.c_[X2, np.ones(N)] #The code to add an additional column to a np array
@@ -53,19 +54,43 @@ class Multiple_Linear(object):
         ax.scatter(X[:, 0], X[:, 1], Y)
         plt.show()
 
-    def calc_weights(self, X, Y, Ridge = False, L2=100, Feat=2):
+    def calc_weights(self, X, Y, Basic = True, Ridge = False, Learning = False, L2=100, L1=10, Feat=2, learning_rate = 0.001):
         """
         Calculates the weights of the model. 
         Returns w and Yhat
         """
-        w = np.linalg.solve(np.dot(X.T, X), np.dot(X.T, Y)) #Use np.dot() to do matrix multiplication
-        Yhat = np.dot(X, w)  #X must be first so the inner dimensions are the same
+        if Basic:
+            w = np.linalg.solve(np.dot(X.T, X), np.dot(X.T, Y)) #Use np.dot() to do matrix multiplication
+            Yhat = np.dot(X, w)  #X must be first so the inner dimensions are the same
 
         #L2 Regularization
         if Ridge:
-            w_L2 = np.linalg.solve(L2*np.eye(D) + X.T.dot(X), X.T.dot(Y))  #Solves w and adds the weight penalty
+            w_L2 = np.linalg.solve(L2*np.eye(Feat) + X.T.dot(X), X.T.dot(Y))  #Solves w and adds the weight penalty
             Yhat_L2 = X.dot(w_L2)
         
+        if Learning:
+            #Generate random weights
+            w = np.random.randn(Feat) / np.sqrt(Feat)
+            print(f"print intial w: {w}")
+            #Normalise data between 0 and 1 to max activation fuction effecieny
+            mu = X.mean(axis=0)
+            std = X.std(axis=0)
+            np.place(std, std == 0, 1)
+            X = (X - mu) / std
+
+            print(mu,std)
+
+            for t in range(1000):
+                Yhat = np.dot(X, w)
+                delta = Yhat - Y
+                mse = delta.dot(delta) / N
+                #Have to use the transpose of X so: D x N * N * 1
+                #Thus, given w = D x 1
+                w = w - learning_rate * (X.T.dot(delta) + L1*np.tanh(w)) #
+                if t % 100 == 0:
+                    #print(Yhat)
+                    print(t, mse)  
+            print(f"print final w: {w}")
         return w, Yhat, w_L2, Yhat_L2
 
     def MSE(self, Y, Yhat, N):
@@ -108,25 +133,27 @@ class Multiple_Linear(object):
         plt.legend()
         plt.show()
 
-filename = r"C:\Dev\SourceCode\Personal\mk007---ML-Python-library\data\archive\hou_all.csv"
+if __name__ == '__main__':
+    filename = r"C:\Dev\SourceCode\Personal\mk007---ML-Python-library\data\archive\hou_all.csv"
 
-MultiL = Multiple_Linear()
-X_train, Y_train, X_test, Y_test, N, D = MultiL.get_data(filename, test_size = 350)
-#X, Y = MultiL.get_data_for_loop()
-#MultiL.plot_graph(X, Y)
-w, Yhat, w_L2, Yhat_L2 = MultiL.calc_weights(X_train, Y_train, Ridge=True, L2=10, Feat=D)
+    MultiL = Multiple_Linear()
+    X_train, Y_train, X_test, Y_test, N, D = MultiL.get_data(filename, test_siz_perc = 0.8)
+    #X, Y = MultiL.get_data_for_loop()
+    #MultiL.plot_graph(X, Y)
+    w, Yhat, w_L2, Yhat_L2 = MultiL.calc_weights(X_train, Y_train, Basic=True, Ridge=True, Learning=False,L1=1000, L2=100, Feat=D, learning_rate=0.0001)
 
-R1 = MultiL.R_squared(Y_train, Yhat)
-R2 = MultiL.R_squared(Y_train, Yhat_L2)
-print("The value of R squared is", R1)
-print("The value of R squared is", R2)
+    R1 = MultiL.R_squared(Y_train, Yhat)
+    R2 = MultiL.R_squared(Y_train, Yhat_L2)
+    print("The value of R squared is", R1)
+    print("The value of R squared is", R2)
 
-mse1 = MultiL.MSE(Y_train, Yhat, len(Y_train))
-mse2 = MultiL.MSE(Y_train, Yhat_L2, len(Y_train))
-print("The value of MSE is", mse1)
-print("The value of MSE is", mse2)
+    mse1 = MultiL.MSE(Y_train, Yhat, len(Y_train))
+    mse2 = MultiL.MSE(Y_train, Yhat_L2, len(Y_train))
+    print("The value of MSE is", mse1)
+    print("The value of MSE is", mse2)
 
-result = MultiL.Predict(X_test, w)
-result_L2 = MultiL.Predict(X_test, w_L2)
+    result = MultiL.Predict(X_test, w)
+    result_L2 = MultiL.Predict(X_test, w_L2)
 
-MultiL.Draw_Result(result, result_L2, Y_test)
+    MultiL.Draw_Result(result, result_L2, Y_test)
+
