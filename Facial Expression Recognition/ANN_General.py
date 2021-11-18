@@ -398,4 +398,3 @@ class ANN():
 
 if __name__ == "__main__":
     ANN = ANN()
-    

@@ -19,7 +19,6 @@ def choosing_k(X):
 
 if __name__ == "__main__":
     X = create_data()
-
     choosing_k(X)
     
 
