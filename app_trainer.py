@@ -63,7 +63,7 @@ def Draw_Result(Yhat, Y_test):
 # @task
 def Cross_Validation(Xtrain, Ytrain, Xtest, Ytest, max_k = 30, n_seed=0):
     max_k = 30
-    best_error = 0
+    best_error = float(0)
     k = 0
 
     while k < max_k:
