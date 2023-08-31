@@ -3,16 +3,16 @@ import pickle
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import xgboost as xgb
 
 from sklearn.ensemble import RandomForestRegressor
 from datetime import datetime as dt
-# from perfect import task, Flow
+from prefect import task, Flow
 
-# @task
 def Get_Data(normalize = True):
     print("Reading in and transforming data...")
     # df = pd.read_csv(r"C:\Users\marcel.kotze\OneDrive - Investec\Desktop\ML_Data.csv")
-    df = pd.read_csv(r"C:\Users\marcel.kotze\OneDrive - Investec\Desktop\ML_Data_Non_Zero.csv")
+    df = pd.read_csv(r"C:\Users\marcel.kotze\OneDrive - Investec\Desktop\ML\ML_Data_Non_Zero.csv")
     # print(df.head(10))
     data = df.values
     np.random.shuffle(data)
@@ -33,7 +33,6 @@ def Get_Data(normalize = True):
 
     return X, Y
 
-# @task
 def Splitting_Data(X, Y, Split_Per = 0.95):
     Ntrain = int(len(Y) * Split_Per)
     print(f"Training dataset: {Ntrain}")
@@ -44,7 +43,6 @@ def Splitting_Data(X, Y, Split_Per = 0.95):
 
     return Xtrain, Ytrain, Xtest, Ytest, Ntrain
 
-# @task
 def Draw_Result(Yhat, Y_test):
     i = 0
     while i < len(Yhat):
@@ -60,7 +58,6 @@ def Draw_Result(Yhat, Y_test):
     plt.legend()
     plt.show()
 
-# @task
 def Cross_Validation(Xtrain, Ytrain, Xtest, Ytest, max_k = 30, n_seed=0):
     max_k = 30
     best_error = float(0)
@@ -76,12 +73,11 @@ def Cross_Validation(Xtrain, Ytrain, Xtest, Ytest, max_k = 30, n_seed=0):
             print("test accuracy:", cur_error)
 
         if cur_error > best_error:
-            with open(rf'C:\Users\marcel.kotze\OneDrive - Investec\Desktop\forecast_forex_loan_{n_seed}.pkl', 'wb') as f:
+            with open(rf'C:\Users\marcel.kotze\OneDrive - Investec\Desktop\ML\forecast_forex_loan_{n_seed}.pkl', 'wb') as f:
                 pickle.dump(model, f)
         
         k += 1
 
-# @task
 def MSE(Y, Yhat, N):
     """
     Determines the Mean Square of Error, determines how acuare the model is. The lower the better
@@ -89,6 +85,7 @@ def MSE(Y, Yhat, N):
     delta = Y - Yhat
     mse = delta.dot(delta) / N
     return mse
+
 
 def R_squared(Y, Yhat):
     """
@@ -104,18 +101,20 @@ def R_squared(Y, Yhat):
     R = 1 - dif1.dot(dif2)/dif2.dot(dif2) 
     return R
 
+
 def Test_Formula_Accuracy():
-    df = pd.read_csv(r"C:\Users\marcel.kotze\OneDrive - Investec\Desktop\Formula_Accuracy.csv")
+    df = pd.read_csv(r"C:\Users\marcel.kotze\OneDrive - Investec\Desktop\ML\Formula_Accuracy.csv")
     # print(df.head(10))
     data = df.values
     Y = data[:, -2]
     Yhat = data[:, -1]
 
-    R = R_squared(Y, Yhat)
+    r = R_squared(Y, Yhat)
+    mse = MSE(Y, Yhat, Y.shape[0])
 
-    print(f"The accuracy of the formula is {R}")
+    print(f"The accuracy of the formula is: \nR = {r} \nMSE = {mse}")
 
-# @task
+@task
 def Training():
     seed = 0
     while seed < 20:
@@ -130,7 +129,7 @@ def Training():
     best_mse = 0
     while i < seed-1:
         try:
-            with open (rf'C:\Users\marcel.kotze\OneDrive - Investec\Desktop\forecast_forex_loan_{i}.pkl', "rb") as f:
+            with open (rf'C:\Users\marcel.kotze\OneDrive - Investec\Desktop\ML\forecast_forex_loan_{i}.pkl', "rb") as f:
                 model = pickle.load(f) #already trained
 
             Y_predict_test = model.predict(Xtest)
@@ -145,16 +144,16 @@ def Training():
                 best_mse = mse
                 best_seed = seed
             else: 
-                os.remove(rf'C:\Users\marcel.kotze\OneDrive - Investec\Desktop\forecast_forex_loan_{i}.pkl')
+                os.remove(rf'C:\Users\marcel.kotze\OneDrive - Investec\Desktop\ML\forecast_forex_loan_{i}.pkl')
         except:
             pass
         i+=1
 
     return best_seed, Xtest, best_score, best_mse, Ytest
 
-# @task
+@task
 def Training_Val(best_seed, Xtest, best_score, best_mse, Ytest):
-    with open (rf'C:\Users\marcel.kotze\OneDrive - Investec\Desktop\forecast_forex_loan_{best_seed}.pkl', "rb") as f:
+    with open (rf'C:\Users\marcel.kotze\OneDrive - Investec\Desktop\ML\forecast_forex_loan_{best_seed}.pkl', "rb") as f:
         model = pickle.load(f) #already trained
     
     Y_predict_test = model.predict(Xtest)
@@ -163,12 +162,12 @@ def Training_Val(best_seed, Xtest, best_score, best_mse, Ytest):
     
     Draw_Result(Y_predict_test, Ytest)
 
-# @task
+@task
 def Random_Test(best_seed, Split_Per=0, stats = False, draw = False):
     X, Y = Get_Data()
     _, _, Xtest, Ytest, Ntrain = Splitting_Data(X, Y, Split_Per=Split_Per)
 
-    with open (rf'C:\Users\marcel.kotze\OneDrive - Investec\Desktop\forecast_forex_loan_{best_seed}.pkl', "rb") as f:
+    with open (rf'C:\Users\marcel.kotze\OneDrive - Investec\Desktop\ML\forecast_forex_loan_{best_seed}.pkl', "rb") as f:
         model = pickle.load(f) #already trained
     then = dt.now()
     Y_predict_test = model.predict(Xtest)
@@ -186,12 +185,12 @@ def Random_Test(best_seed, Split_Per=0, stats = False, draw = False):
 if __name__ == '__main__':
 
     # Build a flow of the process
-    # with Flow("Testing_Flow") as flow:
+    with Flow("Testing_Flow") as flow:
+        #Building the Model and testing the model
+        #best_seed, Xtest, best_score, best_mse, Ytest = Training()
+        #Training_Val(best_seed, Xtest, best_score, best_mse, Ytest)
+        Random_Test(19, Split_Per=0.0, stats = True, draw = False)
+        Test_Formula_Accuracy()
 
-    #Building the Model and testing the model
-    best_seed, Xtest, best_score, best_mse, Ytest = Training()
-    Training_Val(best_seed, Xtest, best_score, best_mse, Ytest)
-    # Random_Test(4, Split_Per=0.0, stats = True, draw = True)
-    # Test_Formula_Accuracy()
-
-    # flow.run()
+    flow.run()
+    #flow.visualize()
